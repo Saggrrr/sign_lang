@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ISL Vision • Real-Time Indian Sign Language Recognition</title>
+  <meta name="description" content="AI-powered real-time Indian Sign Language (ISL) recognition and learning app using browser-based hand tracking and telemetry.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Particle Canvas for success confetti explosions -->
+  <canvas id="particle-canvas" class="particle-canvas"></canvas>
+
+  <div class="app-container">
+    
+    <!-- Top Futuristic Bar -->
+    <header>
+      <div class="logo-section">
+        <div class="logo-icon">
+          <!-- Gesture hand SVG -->
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2a1 1 0 0 1 1 1v7.586l1.293-1.293a1 1 0 0 1 1.414 1.414l-3 3a1 1 0 0 1-1.414 0l-3-3a1 1 0 1 1 1.414-1.414L11 10.586V3a1 1 0 0 1 1-1zm6 14.5a3.5 3.5 0 0 1-6.953.571 5.986 5.986 0 0 0-4.004-1.57h-.086A3.957 3.957 0 0 0 3 19.457c0 1.956 1.587 3.543 3.543 3.543h10.914A3.543 3.543 0 0 0 21 19.457v-2.957a1 1 0 0 0-2 0v2.957a1.543 1.543 0 0 1-1.543 1.543H6.543A1.543 1.543 0 0 1 5 19.457a1.957 1.957 0 0 1 1.957-1.957h.086c1.83 0 3.535.819 4.673 2.247A1.5 1.5 0 0 0 13 20h.047A1.5 1.5 0 0 0 14.5 18.5a1.5 1.5 0 0 0-3 0 1.5 1.5 0 0 0-3 0 1.5 1.5 0 0 0-2.457-1.157A3.957 3.957 0 0 0 3 19.457h15a1.543 1.543 0 0 1 1.543-1.543v1.543a1 1 0 0 0 2 0v-2.957z" />
+          </svg>
+        </div>
+        <div class="logo-text">
+          <h1>ISL Vision</h1>
+          <span>AI Gesture Telemetry Engine</span>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="nav-tabs">
+        <button class="tab-btn active" id="tab-btn-recognition" data-target="recognition">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+          </svg>
+          Live recognition
+        </button>
+        <button class="tab-btn" id="tab-btn-dictionary" data-target="dictionary">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+          </svg>
+          ISL Dictionary
+        </button>
+        <button class="tab-btn" id="tab-btn-practice" data-target="practice">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 .364l-.707 .707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548 .547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+          </svg>
+          Practice arena
+        </button>
+        <button class="tab-btn" id="tab-btn-translator" data-target="translator">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5c1.382 3.3 3.526 6.2 6.152 8.5M17 19h4.3"></path>
+          </svg>
+          Text-to-Sign
+        </button>
+      </nav>
+    </header>
+
+    <!-- Main Views Area -->
+    <main>
+      
+      <!-- Global Loading Screen for MediaPipe WebAssembly Models -->
+      <div id="loading-overlay" class="loading-overlay">
+        <div class="loading-circle"></div>
+        <div class="loading-text">
+          <h3 id="loading-title">Initializing Neural Models</h3>
+          <p id="loading-desc">Fetching Google MediaPipe Hand Landmarker files from CDN...</p>
+        </div>
+      </div>
+
+      <!-- VIEW 1: Live Recognition Dashboard -->
+      <section id="view-recognition" class="tab-content active">
+        <div class="dashboard-grid">
+          
+          <!-- Column 1: Live Stream HUD -->
+          <div class="panel-card">
+            <div class="panel-title">
+              <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+              </svg>
+              Live Video Capture Feed
+            </div>
+            
+            <div class="camera-hud-container" id="recognition-hud">
+              <!-- Mirroring video tag -->
+              <video id="webcam" class="camera-feed" autoplay playsinline></video>
+              <canvas id="canvas" class="canvas-overlay"></canvas>
+              
+              <!-- Futuristic HUD Decorations -->
+              <div class="hologram-grid"></div>
+              <div class="camera-hud-decorations">
+                <div class="hud-corner corner-tl"></div>
+                <div class="hud-corner corner-tr"></div>
+                <div class="hud-corner corner-bl"></div>
+                <div class="hud-corner corner-br"></div>
+              </div>
+              <div class="hud-status-tag" id="camera-status-tag">
+                <div class="hud-status-dot"></div>
+                <span>HUD READY</span>
+              </div>
+              <div class="hud-rec-tag">
+                <div class="hud-rec-dot"></div>
+                <span>LIVE FEED</span>
+              </div>
+            </div>
+
+            <div class="camera-controls">
+              <button class="btn btn-primary" id="toggle-camera-btn">
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5.636 18.364a9 9 0 010-12.728m12.728 0a9 9 0 010 12.728m-9.9-2.829a5 5 0 010-7.07m7.072 0a5 5 0 010 7.07M13 12a1 1 0 11-2 0 1 1 0 012 0z"></path>
+                </svg>
+                Activate Camera
+              </button>
+              
+              <div style="display: flex; gap: 0.5rem;">
+                <button class="btn" id="speak-recognized-btn" title="Speak full text" disabled>
+                  <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path>
+                  </svg>
+                </button>
+                <button class="btn" id="add-space-btn" title="Add space to recognized output" disabled>
+                  Space
+                </button>
+                <button class="btn" id="delete-char-btn" title="Delete last character" disabled>
+                  Delete
+                </button>
+                <button class="btn" id="clear-text-btn" title="Clear all text" disabled>
+                  Clear
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Column 2: Recognition Display & Telemetry -->
+          <div class="panel-card" style="display: flex; flex-direction: column; gap: 1.25rem;">
+            <div>
+              <div class="panel-title">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                Live Translation Output
+              </div>
+
+              <!-- Output Box -->
+              <div class="recognition-card">
+                <div class="current-recognized-sign-large" id="current-char-display">-</div>
+                
+                <div class="recognition-text-container" id="recognized-text-wrapper">
+                  <span class="placeholder-text" id="recognition-placeholder">Perform ISL signs in front of the camera to see text here...</span>
+                  <div class="gesture-bubble-flow" id="recognized-bubbles-container"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Telemetry panel -->
+            <div>
+              <div class="panel-title">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                </svg>
+                Bio-Metric Hand Telemetry
+              </div>
+              
+              <div class="telemetry-monitor">
+                <div class="telemetry-row">
+                  <span class="telemetry-label">Active Hand Count</span>
+                  <span class="telemetry-val" id="telemetry-hands-count">0 Detected</span>
+                </div>
+                <div class="telemetry-row">
+                  <span class="telemetry-label">Main Hand Type</span>
+                  <span class="telemetry-val" id="telemetry-hand-type">N/A</span>
+                </div>
+                <div class="telemetry-row">
+                  <span class="telemetry-label">Hand Intersection Dist</span>
+                  <span class="telemetry-val accent" id="telemetry-distance">N/A</span>
+                </div>
+                <div class="telemetry-row">
+                  <span class="telemetry-label">Classification Match</span>
+                  <span class="telemetry-val success" id="telemetry-confidence">N/A</span>
+                </div>
+
+                <!-- Flex Levels bars -->
+                <div class="flex-levels-grid">
+                  <div class="finger-bar-container">
+                    <div class="finger-bar-bg">
+                      <div class="finger-bar-fill" id="bar-thumb"></div>
+                    </div>
+                    <span class="finger-label">THB</span>
+                  </div>
+                  <div class="finger-bar-container">
+                    <div class="finger-bar-bg">
+                      <div class="finger-bar-fill" id="bar-index"></div>
+                    </div>
+                    <span class="finger-label">IDX</span>
+                  </div>
+                  <div class="finger-bar-container">
+                    <div class="finger-bar-bg">
+                      <div class="finger-bar-fill" id="bar-middle"></div>
+                    </div>
+                    <span class="finger-label">MID</span>
+                  </div>
+                  <div class="finger-bar-container">
+                    <div class="finger-bar-bg">
+                      <div class="finger-bar-fill" id="bar-ring"></div>
+                    </div>
+                    <span class="finger-label">RNG</span>
+                  </div>
+                  <div class="finger-bar-container">
+                    <div class="finger-bar-bg">
+                      <div class="finger-bar-fill" id="bar-pinky"></div>
+                    </div>
+                    <span class="finger-label">PNK</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 2: Dictionary Grid and Details -->
+      <section id="view-dictionary" class="tab-content">
+        <div class="panel-card">
+          <div class="panel-title">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+            </svg>
+            Interactive ISL Dictionary
+          </div>
+
+          <div class="dictionary-controls">
+            <div class="search-input-wrapper">
+              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+              </svg>
+              <input type="text" id="dictionary-search" class="search-input" placeholder="Search signs (e.g. 'A', 'Hello')...">
+            </div>
+            
+            <div class="filter-group">
+              <button class="filter-btn active" data-filter="all">All Signs</button>
+              <button class="filter-btn" data-filter="alphabets">Alphabets</button>
+              <button class="filter-btn" data-filter="phrases">Words / Phrases</button>
+            </div>
+          </div>
+
+          <!-- Dictionary Grid -->
+          <div class="dictionary-grid" id="dict-grid-container">
+            <!-- Dynamically populated -->
+          </div>
+
+          <!-- Interactive Details Section -->
+          <div class="detail-layout" id="dict-details-layout" style="display: none;">
+            <div class="sign-viz-box">
+              <div class="vector-hand-container" id="dict-vector-container">
+                <!-- SVG hands drawn here -->
+              </div>
+            </div>
+            
+            <div class="sign-instructions">
+              <div class="instruction-block">
+                <h4 id="dict-detail-title">Sign Detail</h4>
+                <p id="dict-detail-desc">Detailed guidelines of how to form this sign correctly.</p>
+              </div>
+              <div class="instruction-block">
+                <h4>Heuristic Rules</h4>
+                <ul class="steps-list" id="dict-detail-steps">
+                  <li>Active two-hand detection.</li>
+                </ul>
+              </div>
+              <div>
+                <button class="btn btn-accent" id="dict-test-gesture-btn">
+                  Test Gesture
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 3: Practice Quiz Arena -->
+      <section id="view-practice" class="tab-content">
+        <div class="practice-grid">
+          
+          <!-- Column 1: Live HUD (Quiz) -->
+          <div class="panel-card">
+            <div class="panel-title">
+              <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+              </svg>
+              Practice Camera Hub
+            </div>
+            
+            <div class="camera-hud-container" id="practice-hud-container">
+              <!-- Re-use/move webcam feed inside custom layout -->
+              <div class="hold-progress-overlay" id="hold-countdown-overlay">
+                <svg class="circular-timer-svg">
+                  <circle class="circular-timer-bg" cx="12" cy="12" r="10"></circle>
+                  <circle class="circular-timer-fill" id="circular-timer-bar" cx="12" cy="12" r="10"></circle>
+                </svg>
+                <span class="hold-text" id="hold-text-val">HOLDING SIGN 0.0s</span>
+              </div>
+              <div id="practice-camera-placeholder" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--text-muted);">
+                Camera will automatically mount when Practice Mode starts.
+              </div>
+            </div>
+            
+            <div class="camera-controls">
+              <button class="btn btn-primary" id="start-practice-btn">
+                Start Session
+              </button>
+              <button class="btn" id="skip-practice-btn" disabled>
+                Skip Gesture
+              </button>
+            </div>
+          </div>
+
+          <!-- Column 2: Gaming Hub Dashboard -->
+          <div class="quiz-dashboard">
+            
+            <div class="panel-card">
+              <div class="panel-title">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                </svg>
+                Gaming Diagnostics
+              </div>
+              
+              <div class="quiz-score-strip">
+                <div class="score-item">
+                  <span class="score-title">Solved</span>
+                  <span class="score-val" id="quiz-solved-val">0</span>
+                </div>
+                <div class="score-item">
+                  <span class="score-title">Current Streak</span>
+                  <span class="score-val streak" id="quiz-streak-val">0</span>
+                </div>
+                <div class="score-item">
+                  <span class="score-title">High Score</span>
+                  <span class="score-val" id="quiz-high-val">0</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Target Sign details -->
+            <div class="panel-card" style="flex-grow: 1;">
+              <div class="panel-title">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 .364l-.707 .707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548 .547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                </svg>
+                Target Gesture Profile
+              </div>
+              
+              <div class="quiz-target-card">
+                <div class="quiz-target-subtitle" id="practice-subtitle">ISL ALPHABET</div>
+                <div class="quiz-target-letter" id="practice-target-letter">-</div>
+                <div class="quiz-target-desc" id="practice-target-desc">Press "Start Session" to begin training!</div>
+                <div id="practice-vector-preview" style="width: 100px; height: 100px; opacity: 0.8;"></div>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </section>
+
+      <!-- VIEW 4: Text-To-Sign Translator -->
+      <section id="view-translator" class="tab-content">
+        <div class="panel-card">
+          <div class="panel-title">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5c1.382 3.3 3.526 6.2 6.152 8.5M17 19h4.3"></path>
+            </svg>
+            Text-to-Sign Visualizer
+          </div>
+
+          <div class="translator-bar">
+            <input type="text" id="translator-search-input" class="translator-input" placeholder="Type letters or full phrases to translate (e.g. 'A B C' or 'HELLO')...">
+            <button class="btn btn-accent" id="translator-play-btn">
+              Visualize Sign
+            </button>
+          </div>
+
+          <div class="translator-viz-panel">
+            
+            <div class="translator-anim-stage">
+              <div class="translator-anim-letter" id="trans-anim-char">-</div>
+              
+              <div style="position: absolute; width: 85%; height: 85%; display: flex; align-items: center; justify-content: center; pointer-events: none;">
+                <div class="vector-hand-container" id="trans-vector-container" style="opacity: 0.15;">
+                  <!-- Vector hands layout background -->
+                </div>
+              </div>
+            </div>
+
+            <div class="translator-anim-desc" id="trans-anim-desc">
+              Type characters above and press visualize to begin animation playback.
+            </div>
+
+            <!-- Tape Playback indicators -->
+            <div class="translator-tape-flow" id="trans-tape-container">
+              <!-- Tape cells -->
+            </div>
+
+            <div class="translator-tape-flow" style="display: none;">
+              <!-- Empty spacer to keep grid -->
+            </div>
+
+            <div class="translator-playback-controls">
+              <button class="btn btn-icon-only" id="trans-prev-btn" title="Previous Sign" disabled>
+                &larr;
+              </button>
+              <button class="btn" id="trans-play-pause-btn" disabled>
+                Play Sequence
+              </button>
+              <button class="btn btn-icon-only" id="trans-next-btn" title="Next Sign" disabled>
+                &rarr;
+              </button>
+              <span style="font-family: var(--font-mono); font-size: 0.85rem; color: var(--text-secondary); margin-left: 1rem;" id="trans-playback-speed">
+                Speed: 1.5s/sign
+              </span>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Footer Stats Tracker -->
+    <footer>
+      <div class="status-badge">
+        <div class="status-indicator" id="footer-status-indicator"></div>
+        <span id="footer-status-text">INITIALIZING ENGINE</span>
+      </div>
+      
+      <div class="footer-stats">
+        <div>CORE FPS: <span style="color: var(--secondary); font-weight: 500;" id="fps-counter">0</span></div>
+        <div>LATENCY: <span style="color: var(--accent); font-weight: 500;" id="latency-counter">0ms</span></div>
+        <div>MODEL: <span style="color: #fff;" id="model-badge">HandLandmarker v0.10.8</span></div>
+      </div>
+    </footer>
+
+  </div>
+
+</body>
+</html>
