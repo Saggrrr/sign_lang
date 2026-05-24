@@ -3,7 +3,7 @@ import { ISL_DICTIONARY } from "./dictionary.js";
 import { classifyISLGesture } from "./classifier.js";
 
 // MediaPipe imports from CDN
-import { HandLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.8/vision_bundle.js";
+import { HandLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.8/vision_bundle.mjs";
 
 // Global App States
 const state = {
